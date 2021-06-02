@@ -1,23 +1,56 @@
 import logo from './logo.svg';
 import './App.css';
+import React from 'react';
+import fetchGraphQL from './services/fetchGraphQL';
 
-function App() {
+const { useState, useEffect } = React;
+
+function App(props) {
+  const [name, setName] = useState(null);
+  const [albums, setAlbums] = useState([]);
+  useEffect(() => {
+    let isMounted = true;
+    const AlbumsQuery =`
+      query abc {
+        albums{
+          data{
+            id
+            title
+          }
+        }
+      }
+    `;
+
+    fetchGraphQL(AlbumsQuery).then(response => {
+      // Avoid updating state if the component unmounted before the fetch completes
+      if (!isMounted) {
+        return;
+      }
+      // const data = response.data;
+      setAlbums(response.data.albums.data);
+    }).catch(error => {
+      console.error(error);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchGraphQL]);
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <ul>
+        {
+        albums && albums.length && albums.map(e=>{
+          return(
+            <li>
+              <span>{e.id}</span>.
+              <span>{e.title}</span>
+            </li>
+          )
+        })
+        }
+      </ul>
+       
     </div>
   );
 }
